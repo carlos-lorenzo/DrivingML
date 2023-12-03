@@ -1,52 +1,60 @@
 using UnityEngine;
-using System.Collections;
 
-public class Drive : MonoBehaviour {
-
-	public float acceleration;
-	public float steering;
-	private Rigidbody2D rb;
+public class Drive : MonoBehaviour
+{
+    public float acceleration;
+    public float steering;
+    private Rigidbody2D rb;
 
     public float h;
     public float v;
 
-	void Start () {
-		rb = GetComponent<Rigidbody2D>();
-	}
+    public float currentVelocity; // New variable to track current velocity
 
-	void FixedUpdate () {
-		
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
 
-		Vector2 speed = transform.up * (v * acceleration);
-		rb.AddForce(speed);
+    void FixedUpdate()
+    {
+        Vector2 speed = transform.up * (v * acceleration);
 
-		float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
-		if(direction >= 0.0f) {
-			rb.rotation += h * steering;
-			//rb.AddTorque((h * steering) * (rb.velocity.magnitude / 10.0f));
-		} else {
-			rb.rotation -= h * steering;
-			//rb.AddTorque((-h * steering) * (rb.velocity.magnitude / 10.0f));
-		}
+        // Calculate the desired velocity
+        float targetVelocity = v * acceleration;
 
-		Vector2 forward = new Vector2(0.0f, 0.5f);
-		float steeringRightAngle;
-		if(rb.angularVelocity > 0) {
-			steeringRightAngle = -90;
-		} else {
-			steeringRightAngle = 90;
-		}
+        // Smoothly adjust the current velocity towards the target velocity
+        currentVelocity = Mathf.Lerp(currentVelocity, targetVelocity, Time.deltaTime * 5f);
 
-		Vector2 rightAngleFromForward = Quaternion.AngleAxis(steeringRightAngle, Vector3.forward) * forward;
-		Debug.DrawLine((Vector3)rb.position, (Vector3)rb.GetRelativePoint(rightAngleFromForward), Color.green);
+        // Apply the smoothed velocity as force
+        rb.AddForce(transform.up * currentVelocity);
 
-		float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
+        float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
+        if (direction >= 0.0f)
+        {
+            rb.rotation += h * steering;
+        }
+        else
+        {
+            rb.rotation -= h * steering;
+        }
 
-		Vector2 relativeForce = (rightAngleFromForward.normalized * -1.0f) * (driftForce * 10.0f);
+        Vector2 forward = new Vector2(0.0f, 0.5f);
+        float steeringRightAngle;
+        if (rb.angularVelocity > 0)
+        {
+            steeringRightAngle = -90;
+        }
+        else
+        {
+            steeringRightAngle = 90;
+        }
 
+        Vector2 rightAngleFromForward = Quaternion.AngleAxis(steeringRightAngle, Vector3.forward) * forward;
 
-		Debug.DrawLine((Vector3)rb.position, (Vector3)rb.GetRelativePoint(relativeForce), Color.red);
+        float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
+        Vector2 relativeForce = (rightAngleFromForward.normalized * -1.0f) * (driftForce * 10.0f);
 
-		rb.AddForce(rb.GetRelativeVector(relativeForce));
-	}
+        rb.AddForce(rb.GetRelativeVector(relativeForce));
+    }
 }

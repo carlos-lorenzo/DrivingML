@@ -14,11 +14,22 @@ public class AgentMoves : MonoBehaviour
     private Drive driveScript;
 
     public float fitness;
+    public bool collided = false;
+    public bool finished = false;
+    public int lastCheckpoint = -1;
+
+    public int checkpointReward = 10;
+    public int backwardsPunishment = 2000;
+
+    public int collisionPunishment = 3;
 
     private System.Random random = new System.Random();
 
+    private Rigidbody2D rb;
+
     private void Awake() {
         driveScript = gameObject.GetComponent<Drive>();
+        rb = gameObject.GetComponent<Rigidbody2D>();
     }
   
 
@@ -72,11 +83,11 @@ public class AgentMoves : MonoBehaviour
         {
             
 
-            if (UnityEngine.Random.Range(0.0f, 1.0f) < mutationChance) {
+            if (UnityEngine.Random.Range(0.0f, 1.0f) + (i / 100)< mutationChance) {
                 horizontalMovements[i] = RandomMove();
             }
 
-            if (UnityEngine.Random.Range(0.0f, 1.0f) < mutationChance) {
+            if (UnityEngine.Random.Range(0.0f, 1.0f) + (i / 100) < mutationChance) {
                 verticalMovements[i] = RandomMove();
             }
         }
@@ -85,24 +96,47 @@ public class AgentMoves : MonoBehaviour
     public IEnumerator Drive() {
         for (int i = 0; i < horizontalMovements.Count; i++)
         {
+            
             driveScript.h = horizontalMovements[i];
             driveScript.v = verticalMovements[i];
             //fitness += gameObject.transform.position.y - fitness;
             yield return new WaitForSeconds(0.5f);
+            
+            
         }
 
-        fitness = gameObject.transform.position.y;
+        finished = true;
+        
         driveScript.h = 0;
         driveScript.v = 0; 
-        gameObject.SetActive(false);
+
+        GameObject nextCheckpoint = GameObject.Find((lastCheckpoint + 1).ToString());
+
+        fitness -= Vector3.Distance(nextCheckpoint.transform.position, gameObject.transform.position);
         
     }
 
-    private void OnTriggerEnter(Collider other) {
-        Debug.Log(other);
+    private void OnTriggerEnter2D(Collider2D other) {
         if (other.CompareTag("Checkpoint")) {
-            fitness += 10;
-            Debug.Log("checkpoint");
+            int checkpointNumber = int.Parse(other.gameObject.name);
+
+            if (checkpointNumber == lastCheckpoint + 1) {
+                lastCheckpoint = checkpointNumber;
+                fitness += checkpointReward;
+            } else {
+                fitness -= backwardsPunishment;
+            }
         }
     }
+
+    private void OnCollisionEnter2D(Collision2D other) {
+       
+       
+
+        if (other.gameObject.CompareTag("Track")) {
+            collided = true;
+            fitness -= collisionPunishment * rb.velocity.magnitude;
+            return;
+        }
+    } 
 }

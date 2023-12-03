@@ -7,26 +7,35 @@ using UnityEngine.Animations;
 
 public class GeneticManagement : MonoBehaviour
 {
-
+    // Hyperparameters
     public int movesSize = 10;
-    public float mutationChance = 0.5f;
+    public float mutationChance = 0.005f;
+
+    public int populationSize = 300;
+
+    public int addMoveEveryNGenerations = 10;
+
     public GameObject agent;
 
-    public int populationSize = 5;
+    
     public int generation = 0;
-    private List<GameObject> population;
-
     private bool completed = true;
 
-    private System.Random random = new System.Random();
+    private Vector3 spawn = new Vector3(-205, 0, -0.1f);
 
+    private List<GameObject> population;
+
+    
+
+    private System.Random random = new System.Random();
+    
 
     void FixedUpdate() {
         
         if (generation != 0) {
             AgentMoves agentMoves = population[population.Count - 1].GetComponent<AgentMoves>();
             if (agentMoves != null) {
-                if (agentMoves.fitness != 0) {
+                if (agentMoves.finished) {
                     completed = true;
                 }
             }
@@ -40,7 +49,7 @@ public class GeneticManagement : MonoBehaviour
             generation += 1;
             completed = false;
 
-            if (generation % 5 == 0) {
+            if (generation % addMoveEveryNGenerations == 0) {
                 movesSize += 1;
             }
             
@@ -51,48 +60,49 @@ public class GeneticManagement : MonoBehaviour
 
 
     void Populate() {
-        
-        List<List<int>> parentsHorizontalMovements = new List<List<int>>();
-        List<List<int>> parentsVerticalMovements = new List<List<int>>();
+        List<List<int>> parent1Moves = new List<List<int>>();
+        List<List<int>> parent2Moves = new List<List<int>>();
 
-
-        if (generation != 0) {
+        if (generation != 0)
+        {
             List<GameObject> parents = FittestParents(2);
-            
-            for (int i = 0; i < parents.Count; i++)
-            {
 
-                AgentMoves parentMoves = parents[i].GetComponent<AgentMoves>();
-                parentsHorizontalMovements.Add(parentMoves.horizontalMovements);
-                parentsVerticalMovements.Add(parentMoves.verticalMovements);
-            }
+            parent1Moves.Add(parents[0].GetComponent<AgentMoves>().horizontalMovements);
+            parent1Moves.Add(parents[0].GetComponent<AgentMoves>().verticalMovements);
+
+            parent2Moves.Add(parents[1].GetComponent<AgentMoves>().horizontalMovements);
+            parent2Moves.Add(parents[1].GetComponent<AgentMoves>().verticalMovements);
 
             Purge();
+
         }
-        
-        
+
         population = new List<GameObject>();
-        
+
         for (int i = 0; i < populationSize; i++)
         {
-            GameObject newAgent = Instantiate(agent, new Vector3(-205, 0, -0.1f), quaternion.identity);
+            GameObject newAgent = Instantiate(agent, spawn, quaternion.identity);
             AgentMoves agentMoves = newAgent.GetComponent<AgentMoves>();
-            if (agentMoves == null) {
+
+            if (agentMoves == null)
+            {
                 continue;
             }
-            if (generation != 0) {
-                agentMoves.InheritMoves(movesSize, parentsHorizontalMovements, parentsVerticalMovements);
 
+            if (generation != 0)
+            {
+                agentMoves.InheritMoves(movesSize, parent1Moves, parent2Moves);
                 agentMoves.Mutate(mutationChance);
-
-            } else {
+            }
+            else
+            {
                 agentMoves.InitializeMoves(movesSize);
             }
-            
-            
+
             population.Add(newAgent);
         }
-    }
+    }   
+
 
     void Live() {
         foreach (GameObject agent in population) {

@@ -119,6 +119,12 @@ MonoBehaviour:
   horizontalMovements: 
   verticalMovements: 
   fitness: 0
+  collided: 0
+  finished: 0
+  lastCheckpoint: -1
+  checkpointReward: 50
+  backwardsPunishment: 1000
+  collisionPunishment: 3
 --- !u!61 &2296415264005791077
 BoxCollider2D:
   m_ObjectHideFlags: 0
