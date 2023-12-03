@@ -104,6 +104,7 @@ MonoBehaviour:
   steering: 3
   h: 0
   v: 0
+  currentVelocity: 0
 --- !u!114 &-2657251690208572736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,9 +123,11 @@ MonoBehaviour:
   collided: 0
   finished: 0
   lastCheckpoint: -1
-  checkpointReward: 50
+  checkpointReward: 100
   backwardsPunishment: 1000
-  collisionPunishment: 3
+  collisionPunishment: 10
+  directionWeight: 0.05
+  acquiredAmount: 0.9
 --- !u!61 &2296415264005791077
 BoxCollider2D:
   m_ObjectHideFlags: 0

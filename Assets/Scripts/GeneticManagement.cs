@@ -9,7 +9,9 @@ public class GeneticManagement : MonoBehaviour
 {
     // Hyperparameters
     public int movesSize = 10;
-    public float mutationChance = 0.005f;
+    public float acquiredMutationChance = 0.002f; // Lower chance for acquired moves
+    public float explorationMutationChance = 0.01f; // Higher chance for new moves
+
 
     public int populationSize = 300;
 
@@ -92,7 +94,7 @@ public class GeneticManagement : MonoBehaviour
             if (generation != 0)
             {
                 agentMoves.InheritMoves(movesSize, parent1Moves, parent2Moves);
-                agentMoves.Mutate(mutationChance);
+                agentMoves.Mutate(acquiredMutationChance, explorationMutationChance);
             }
             else
             {
@@ -133,21 +135,6 @@ public class GeneticManagement : MonoBehaviour
         population = new List<GameObject>();
     }
 
-    int RandomMove() {
-        var choices = new List<int>{-1, 0, 1};
-        return choices[random.Next(choices.Count)];
-    }
-
-    List<int> Randomise(List<int> moves) {
-        for (int i = 0; i < moves.Count; i++)
-        {
-            if (UnityEngine.Random.Range(0.0f, 1.0f) < mutationChance) {
-                moves[i] = RandomMove();
-            }
-        }
-
-        return moves;
-    }
 
     
 }

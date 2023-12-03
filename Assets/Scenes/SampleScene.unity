@@ -257,9 +257,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3af700997662562f807c661bf76ab9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movesSize: 5
-  mutationChance: 0.01
-  populationSize: 250
+  movesSize: 10
+  acquiredMutationChance: 0.001
+  explorationMutationChance: 0.005
+  populationSize: 350
   addMoveEveryNGenerations: 10
   agent: {fileID: 5339336433223139050, guid: 2754c7483369ce6478fd25ed0637da78, type: 3}
   generation: 0

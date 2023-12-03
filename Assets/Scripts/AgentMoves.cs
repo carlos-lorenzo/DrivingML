@@ -23,6 +23,9 @@ public class AgentMoves : MonoBehaviour
 
     public int collisionPunishment = 3;
 
+    public float directionWeight = 0.3f;
+    public float acquiredAmount = 0.7f;
+
     private System.Random random = new System.Random();
 
     private Rigidbody2D rb;
@@ -78,16 +81,20 @@ public class AgentMoves : MonoBehaviour
 
 
 
-    public void Mutate(float mutationChance) {
+    public void Mutate(float acquiredMutationChance, float explorationMutationChance) {
+
+        int acquiredMovesIndex = (int)MathF.Round(horizontalMovements.Count * acquiredAmount);
+
         for (int i = 0; i < horizontalMovements.Count; i++)
         {
             
+            float mutationProbability = acquiredMovesIndex <= i ? acquiredMutationChance : explorationMutationChance;
 
-            if (UnityEngine.Random.Range(0.0f, 1.0f) + (i / 100)< mutationChance) {
+            if (UnityEngine.Random.Range(0.0f, 1.0f) * (i / horizontalMovements.Count) < mutationProbability) {
                 horizontalMovements[i] = RandomMove();
             }
 
-            if (UnityEngine.Random.Range(0.0f, 1.0f) + (i / 100) < mutationChance) {
+            if (UnityEngine.Random.Range(0.0f, 1.0f)  < mutationProbability) {
                 verticalMovements[i] = RandomMove();
             }
         }
@@ -99,7 +106,8 @@ public class AgentMoves : MonoBehaviour
             
             driveScript.h = horizontalMovements[i];
             driveScript.v = verticalMovements[i];
-            //fitness += gameObject.transform.position.y - fitness;
+            
+            //fitness -= MathF.Abs(rb.rotation) * directionWeight;
             yield return new WaitForSeconds(0.5f);
             
             
