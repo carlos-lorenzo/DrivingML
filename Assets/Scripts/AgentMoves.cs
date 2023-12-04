@@ -139,11 +139,11 @@ public class AgentMoves : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other) {
        
-       
+        if (collided) {return;}
 
         if (other.gameObject.CompareTag("Track")) {
             collided = true;
-            fitness -= collisionPunishment * rb.velocity.magnitude;
+            fitness -= collisionPunishment;
             return;
         }
     } 
