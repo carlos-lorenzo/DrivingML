@@ -108,7 +108,7 @@ public class AgentMoves : MonoBehaviour
             driveScript.v = verticalMovements[i];
             
             //fitness -= MathF.Abs(rb.rotation) * directionWeight;
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.75f);
             
             
         }
