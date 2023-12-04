@@ -123,8 +123,8 @@ MonoBehaviour:
   collided: 0
   finished: 0
   lastCheckpoint: -1
-  checkpointReward: 100
-  backwardsPunishment: 1000
+  checkpointReward: 25
+  backwardsPunishment: 100
   collisionPunishment: 10
   directionWeight: 0.05
   acquiredAmount: 0.9

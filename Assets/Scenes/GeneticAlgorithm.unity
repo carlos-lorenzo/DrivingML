@@ -257,7 +257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3af700997662562f807c661bf76ab9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movesSize: 10
+  movesSize: 5
   acquiredMutationChance: 0.001
   explorationMutationChance: 0.005
   populationSize: 350

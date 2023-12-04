@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Animations;
+using System.Linq;
 
 public class GeneticManagement : MonoBehaviour
 {
@@ -27,9 +25,6 @@ public class GeneticManagement : MonoBehaviour
 
     private List<GameObject> population;
 
-    
-
-    private System.Random random = new System.Random();
     
 
     void FixedUpdate() {
@@ -59,7 +54,7 @@ public class GeneticManagement : MonoBehaviour
         
     }
 
-
+    
 
     void Populate() {
         List<List<int>> parent1Moves = new List<List<int>>();
@@ -117,13 +112,26 @@ public class GeneticManagement : MonoBehaviour
 
 
     List<GameObject> FittestParents(int n) {
-        // Sort the population by fitness
-        population.Sort((x, y) => y.GetComponent<AgentMoves>().fitness.CompareTo(x.GetComponent<AgentMoves>().fitness));
 
-        // Get the best n agents
-        List<GameObject> fittestParents = population.GetRange(0, Mathf.Min(n, population.Count));
+        List<float> fitnessScores = new List<float>();
 
+        foreach(GameObject agent in population) {
+            float currentFitness = agent.GetComponent<AgentMoves>().fitness;
+            fitnessScores.Add(currentFitness);
+        }
+
+
+        List<GameObject> fittestParents = new List<GameObject>(); 
+        for (int i = 0; i < n; i++)
+        {
+            float maxValue = fitnessScores.Max();
+            int maxIndex = fitnessScores.ToList().IndexOf(maxValue);
+            fittestParents.Add(population[maxIndex]);
+            fitnessScores.RemoveAt(maxIndex);
+        }
+        
         return fittestParents;
+
     }
 
 
