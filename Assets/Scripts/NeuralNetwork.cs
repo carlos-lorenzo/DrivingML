@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Antlr3.Runtime;
+using UnityEditor.UI;
 
 public class NeuralNetwork : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class NeuralNetwork : MonoBehaviour
         Activation_ReLU activation1 = new Activation_ReLU();
         
         Layer_Dense layer2 = new Layer_Dense(size2);
-        Activation_ReLU activation2 = new Activation_ReLU();
+        Activation_TanH activation2 = new Activation_TanH();
 
         layer1.Forward(new List<double> {1, 2});
         activation1.Forward(layer1.output);
@@ -331,7 +332,7 @@ class Activation_TanH : IActivationFuntion {
     private readonly NumCs nc = new NumCs();
 
     public void Forward(List<double> inputs) {
-        nc.ScalarDivision(2, nc.ScalarAddition(1, nc.ScalarPower(Math.E, nc.ScalarMultiplication(-2, inputs))));
+        output = nc.ScalarSubtraction(1, nc.ScalarDivision(2, nc.ScalarAddition(1, nc.ScalarPower(Math.E, nc.ScalarMultiplication(-2, inputs)))));
     }
 
     public void Backward(List<double> dvalues) {
