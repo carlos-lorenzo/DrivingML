@@ -1,392 +1,557 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime;
-using UnityEditor.UI;
+using System.Linq;
+
 
 public class NeuralNetwork : MonoBehaviour
 {
     public List<int> size1 = new List<int> {2, 3};
     public List<int> size2 = new List<int> {3, 2};
     void Start() {
-        Layer_Dense layer1 = new Layer_Dense(size1);
+
+        NumCs nc = new NumCs();
+
+        Layer_Dense layer1 = new Layer_Dense(size1[0], size1[1]);
         Activation_ReLU activation1 = new Activation_ReLU();
         
-        Layer_Dense layer2 = new Layer_Dense(size2);
+        Layer_Dense layer2 = new Layer_Dense(size2[0], size2[1]);
         Activation_TanH activation2 = new Activation_TanH();
 
-        layer1.Forward(new List<double> {1, 2});
+        List<List<double>> inputs = nc.Rand2D(1, size1[0]);
+        
+
+        layer1.Forward(inputs);
+        
         activation1.Forward(layer1.output);
 
         layer2.Forward(activation1.output);
         activation2.Forward(layer2.output);
 
-        foreach (double output in activation2.output) {
-            Debug.Log(output);
-        }
+
+        nc.DebugArray(activation2.output);
+
+        
     }
 }
 
 public class NumCs
 {
     
-    public List<double> Maximum(List<double> array1, List<double> array2) {
+    public List<List<double>> Maximum(double n, List<List<double>> arr) {
+
+        /**  
+            Modifies each element in a 2D array to be the maximum of the element and n.
+
+            Args:
+                n: The value to compare with each element in the array
+                arr: The 2D array to be modified
+
+            Returns:
+                A new 2D array with modified values where each element is the maximum of the element and n
+        **/
+
+        if ( arr == null)
+        {
+            Debug.LogError("Array cannot be null!");
+            return null; // Return null or handle error according to your needs
+        }
+
+        
+        
+        
+        for (int i = 0; i < arr.Count; i++)
+        {
+            
+            for (int j = 0; j < arr[i].Count; j++)
+            {
+                arr[i][j] = Math.Max(0, arr[i][j]);
+            }
+            
+        }
+
+        return arr;
+    }
+
+    public List<List<double>> Rand2D(int dim1, int dim2) {
+        /**  
+            Returns a 2D array with given size, filled with random values
+        **/
+
+        if (dim1 <= 0 || dim2 <= 0)
+        {
+            Console.WriteLine("Invalid size provided!");
+            return null; // Handle error or return null according to your needs
+        }
+
+        List<List<double>> result = new List<List<double>>();
+
+        System.Random rand = new System.Random();
+        for (int i = 0; i < dim1; i++)
+        {
+            result.Add(new List<double>());
+            for (int j = 0; j < dim2; j++)
+            {
+                result[i].Add((double)rand.NextDouble());
+            }
+            
+        }
+
+        return result;
+    }
+
+    public List<List<double>> Full(double n, int dim1, int dim2) {
+
+        /**  
+            Returns a 2D array with given size, filled with n
+        **/
+
+        if (dim1 <= 0 || dim2 <= 0)
+        {
+            Debug.LogError("Invalid size provided!");
+            return null; // Handle error or return null according to your needs
+        }
+
+        List<List<double>> result = new List<List<double>>();
+
+        
+        for (int i = 0; i < dim1; i++)
+        {
+            result.Add(new List<double> ());
+            for (int j = 0; j < dim2; j++)
+            {
+                result[i].Add(n);
+            }
+            
+        }
+
+        return result;
+    }
+
+
+   public List<List<double>> MatrixMul(List<List<double>> matrix1, List<List<double>> matrix2)
+    {
+
+        /** 
+            Returns the result between the product of 2 matricies
+
+            Args:
+                matrix1: First matrix
+                matrix2: Second matrix
+
+            Returns:
+                Result between the product of 2 matricies
+        
+        **/
+        if (matrix1 == null || matrix2 == null)
+        {
+            Console.WriteLine("Matrices cannot be null");
+            return null; // Handle error or return null according to your needs
+        }
+
+        int rowsA = matrix1.Count;
+        int colsA = matrix1[0].Count;
+        int rowsB = matrix2.Count;
+        int colsB = matrix2[0].Count;
+
+        if (colsA != rowsB)
+        {
+            Console.WriteLine("Cannot multiply matrices: Incompatible dimensions");
+            return null; // Handle error or return null according to your needs
+        }
+
+        List<List<double>> result = new List<List<double>>();
+
+        for (int i = 0; i < rowsA; i++)
+        {
+            result.Add(new List<double>());
+            for (int j = 0; j < colsB; j++)
+            {
+                double sum = 0;
+                for (int k = 0; k < colsA; k++)
+                {
+                    sum += matrix1[i][k] * matrix2[k][j];
+                }
+                result[i].Add(sum);
+            }
+        }
+
+        return result;
+    }
+
+
+    public List<List<double>> VectorisedSum(List<List<double>> array1, List<List<double>> array2)
+    {
+        /**
+            Element-wise addition of two 2D arrays.
+            
+            Args:
+                array1: First 2D array for addition
+                array2: Second 2D array for addition, can have (a, b) or (1, b) shape
+
+            Returns:
+                A 2D array representing the element-wise sum of array1 and array2 
+                with the shape determined by the largest first dimension
+        **/
+
         if (array1 == null || array2 == null)
-        {
-            Debug.LogError("Both arrays cannot be null!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        if (array1.Count != array2.Count)
-        {
-            Debug.LogError("Both arrays must have the same size");
-            return null; // Return null or handle error according to your needs
-        }
-        
-        List<double> result = new List<double>();
-        
-        if (array1 == null) {
-            for (int i = 0; i < array2.Count; i++)
-            {
-                array1.Add(0);
-            }
-        }
-
-        for (int i = 0; i < array1.Count; i++)
-        {
-
-            result.Add(Math.Max(array1[i], array2[i]));
-        }
-
-        return result;
-    }
-
-    public List<List<double>> CreateRandom2DList(List<int> size) {
-        if (size == null || size.Count != 2 || size[0] <= 0 || size[1] <= 0)
-        {
-            Debug.LogError("Invalid size provided!");
-            return null; // Handle error or return null according to your needs
-        }
-
-        List<List<double>> result = new List<List<double>>();
-
-        System.Random rand = new System.Random();
-        for (int i = 0; i < size[0]; i++)
-        {
-            List<double> innerList = new List<double>();
-            for (int j = 0; j < size[1]; j++)
-            {
-                innerList.Add((double)rand.NextDouble());
-            }
-            result.Add(innerList);
-        }
-
-        return result;
-    }
-
-    public List<List<double>> Num2D(List<int> size, double n) {
-
-        if (size == null || size.Count != 2 || size[0] <= 0 || size[1] <= 0)
-        {
-            Debug.LogError("Invalid size provided!");
-            return null; // Handle error or return null according to your needs
-        }
-
-        List<List<double>> result = new List<List<double>>();
-
-        System.Random rand = new System.Random();
-        for (int i = 0; i < size[0]; i++)
-        {
-            List<double> innerList = new List<double>();
-            for (int j = 0; j < size[1]; j++)
-            {
-                innerList.Add(n);
-            }
-            result.Add(innerList);
-        }
-
-        return result;
-    }
-
-    public List<double> Num1D(int size, double n)
-    {
-        if ( size <= 0)
-        {
-            Debug.LogError("Invalid size provided!");
-            return null; // Handle error or return null according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < size; i++)
-        {
-            result.Add(n);
-        }
-
-        return result;
-    }
-
-    public List<double> DotProduct(List<double> vector, List<List<double>> matrix)
-    {
-        if (vector == null || matrix == null || vector.Count != matrix.Count || matrix.Count == 0)
         {
             Debug.LogError("Invalid input arrays!");
             return null; // Return null or handle error according to your needs
         }
 
-        int rows = matrix.Count;
-        int cols = matrix[0].Count;
+        int rows1 = array1.Count;
+        int rows2 = array2.Count;
+        int cols1 = array1[0].Count;
+        int cols2 = array2[0].Count;
 
-        List<double> result = new List<double>();
+        int maxRows = Math.Max(rows1, rows2);
+        int maxCols = Math.Max(cols1, cols2);
 
-        for (int i = 0; i < cols; i++)
-        {
-            double sum = 0;
-            for (int j = 0; j < rows; j++)
-            {
-                sum += matrix[j][i] * vector[j];
-            }
-            result.Add(sum);
-        }
+        List<List<double>> result = new List<List<double>>();
 
-        return result;
-    }
-
-    public List<double> VectorisedSum(List<double> vector1, List<double> vector2)
-    {
-        
-        if (vector1 == null || vector2 == null || vector1.Count != vector2.Count)
-        {
-            Debug.LogError("Invalid input vectors!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector1.Count; i++)
-        {
-            result.Add(vector1[i] + vector2[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> VectorisedDivision(List<double> vector1, List<double> vector2)
-    {
-        
-        if (vector1 == null || vector2 == null || vector1.Count != vector2.Count)
-        {
-            Debug.LogError("Invalid input vectors!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector1.Count; i++)
-        {
-            result.Add(vector1[i] / vector2[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> VectorisedMultiplication(List<double> vector1, List<double> vector2)
-    {
-        
-        if (vector1 == null || vector2 == null || vector1.Count != vector2.Count)
-        {
-            Debug.LogError("Invalid input vectors!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector1.Count; i++)
-        {
-            result.Add(vector1[i] * vector2[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> ScalarMultiplication(double n, List<double> vector)
-    {
-        
-        if ( vector == null)
-        {
-            Debug.LogError("Invalid input vector");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector.Count; i++)
-        {
-            result.Add(n * vector[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> ScalarDivision(double n, List<double> vector)
-    {
-        
-        if ( vector == null)
-        {
-            Debug.LogError("Invalid input vector");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector.Count; i++)
-        {
-            result.Add(n / vector[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> ScalarAddition(double n, List<double> vector)
-    {
-        
-        if ( vector == null)
-        {
-            Debug.LogError("Invalid input vector");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector.Count; i++)
-        {
-            result.Add(n + vector[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> ScalarSubtraction(double n, List<double> vector)
-    {
-        
-        if ( vector == null)
-        {
-            Debug.LogError("Invalid input vector");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < vector.Count; i++)
-        {
-            result.Add(n - vector[i]);
-        }
-
-        return result;
-    }
-
-    public List<double> ScalarPower(double powerBase, List<double> exponentVector)
-    {
-        
-        if (exponentVector == null )
-        {
-            Debug.LogError("Invalid input vector!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<double> result = new List<double>();
-
-        for (int i = 0; i < exponentVector.Count; i++)
-        {
-            result.Add(Math.Pow(powerBase, exponentVector[i]));
-        }
-
-        return result;
-    }
-
-    List<List<double>> Transpose1Dto2D(List<double> inputList, int rows, int cols)
-    {
-        if (inputList == null || inputList.Count != rows * cols)
-        {
-            Debug.LogError("Invalid input list or dimensions!");
-            return null; // Return null or handle error according to your needs
-        }
-
-        List<List<double>> transposedList = new List<List<double>>();
-
-        for (int i = 0; i < cols; i++)
+        for (int i = 0; i < maxRows; i++)
         {
             List<double> newRow = new List<double>();
-            for (int j = 0; j < rows; j++)
+            for (int j = 0; j < maxCols; j++)
             {
-                newRow.Add(inputList[i + j * cols]);
+                double val1 = (i < rows1 && j < cols1) ? array1[i][j] : 0;
+                double val2 = (i < rows2 && j < cols2) ? array2[i][j] : 0;
+
+                newRow.Add(val1 + val2);
             }
-            transposedList.Add(newRow);
+            result.Add(newRow);
         }
 
-        return transposedList;
+        return result;
     }
+    
 
-
-    public List<List<double>> Transpose1Dto2DWithAutoDimension(List<double> inputList, int rows, int cols)
+    public List<List<double>> ScalarAddition(double n, List<List<double>> vector)
     {
-        if (rows == -1 && cols == -1)
+        /**
+            Adds a scalar value to each element of a 2D array.
+            
+            Args:
+                n: Scalar value to be added to the elements of the vector
+                vector: 2D array to which the scalar value is added
+
+            Returns:
+                A 2D array representing the addition of the scalar value to each element of the input vector
+        **/
+
+        if (vector == null)
         {
-            Debug.LogError("Invalid dimensions!");
+            Debug.LogError("Invalid input vector");
             return null; // Return null or handle error according to your needs
         }
 
-        if (rows == -1)
+        for (int i = 0; i < vector.Count; i++)
         {
-            rows = inputList.Count / cols;
-        }
-        else if (cols == -1)
-        {
-            cols = inputList.Count / rows;
+            for (int j = 0; j < vector[i].Count; j++)
+            {
+                vector[i][j] += n;
+            }
         }
 
-        return Transpose1Dto2D(inputList, rows, cols);
+        return vector;
+    }
+
+    
+    public List<List<double>> ScalarMultiplication(double n, List<List<double>> vector)
+    {
+        /**
+            Multiplies a scalar value with each element of a 2D array.
+            
+            Args:
+                n: Scalar value to be multiplied with the elements of the vector
+                vector: 2D array to which the scalar value is multiplied
+
+            Returns:
+                A 2D array representing the multiplication of the scalar value with each element of the input vector
+        **/
+
+        if (vector == null)
+        {
+            Debug.LogError("Invalid input vector");
+            return null; // Return null or handle error according to your needs
+        }
+
+        for (int i = 0; i < vector.Count; i++)
+        {
+            for (int j = 0; j < vector[i].Count; j++)
+            {
+                vector[i][j] *= n;
+            }
+        }
+
+        return vector;
+    }
+
+    public List<List<double>> ScalarSubtraction(List<List<double>> vector, double n, bool reversed = false)
+    {
+        /**
+            Subtracts a scalar value from each element of a 2D array or performs scalar subtraction from the given value.
+            
+            Args:
+                vector: 2D array or scalar value for the subtraction operation
+                n: Scalar value or 2D array used for subtraction
+                reversed: If true, perform operation n - vector; if false, perform operation vector - n
+
+            Returns:
+                A 2D array representing the subtraction operation based on the specified order
+        **/
+
+        if (vector == null)
+        {
+            Debug.LogError("Invalid input vector");
+            return null; // Return null or handle error according to your needs
+        }
+
+        if (reversed)
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] = n - vector[i][j];
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] -= n;
+                }
+            }
+        }
+
+        return vector;
+    }
+
+    public List<List<double>> ScalarDivision(List<List<double>> vector, double n, bool reversed = false)
+    {
+        /**
+            Divides each element of a 2D array by a scalar value or performs scalar division of the given value.
+            
+            Args:
+                vector: 2D array or scalar value for the division operation
+                n: Scalar value or 2D array used for division
+                reversed: If true, perform operation n / vector; if false, perform operation vector / n
+
+            Returns:
+                A 2D array representing the division operation based on the specified order
+        **/
+
+        if (vector == null || Math.Abs(n) < double.Epsilon)
+        {
+            Debug.LogError("Invalid input vector or division by zero");
+            return null; // Return null or handle error according to your needs
+        }
+
+        if (reversed)
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] = n / vector[i][j];
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] /= n;
+                }
+            }
+        }
+
+        return vector;
+    }
+    public List<List<double>> ScalarPower(double n, List<List<double>> vector, bool reversed = false)
+    {
+        /**
+            Exponentiates n by every element of array or exponentiates each element of a 2D array by a scalar value
+            
+            Args:
+                vector: 2D array 
+                n: Scalar value
+                reversed: If true, perform operation vector**n; if false, perform operation n**vector
+
+            Returns:
+                A 2D array representing exponentiated version of it
+        **/
+
+        if (vector == null)
+        {
+            Debug.LogError("Invalid input vector");
+            return null; // Return null or handle error according to your needs
+        }
+
+        if (reversed)
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] = Math.Pow(n, vector[i][j]);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < vector.Count; i++)
+            {
+                for (int j = 0; j < vector[i].Count; j++)
+                {
+                    vector[i][j] = Math.Pow(vector[i][j], n);
+                }
+            }
+        }
+
+        return vector;
+    }
+
+    public List<List<double>> VectorisedExp(List<List<double>> array)
+    {
+         /**
+            Exponentiates every element of the array (e**array)
+            
+            Args:
+                vector: 2D array
+            Returns:
+                A 2D array representing exponentiated version of it
+        **/
+
+        List<List<double>> result = new List<List<double>>();
+
+        for (int i = 0; i < array.Count; i++)
+        {
+            List<double> newRow = new List<double>();
+
+            for (int j = 0; j < array[i].Count; j++)
+            {
+                newRow.Add(Math.Exp(array[i][j]));
+            }
+
+            result.Add(newRow);
+        }
+
+        return result;
+    }
+
+    public void DebugArray(List<List<double>> arr)
+    {
+        /**
+            Displays a 2D array in a readable format with each row on a new line but elements inline within each row
+            
+            Args:
+                arr: The 2D array to be displayed
+        **/
+
+        string output = "[ ";
+
+        for (int i = 0; i < arr.Count; i++)
+        {
+            output += "[";
+            for (int j = 0; j < arr[i].Count; j++)
+            {
+                output += arr[i][j].ToString("0.00");
+                if (j < arr[i].Count - 1)
+                {
+                    output += ", ";
+                }
+            }
+            output += "]";
+            if (i < arr.Count - 1)
+            {
+                output += ",\n  ";
+            }
+        }
+        output += " ]";
+
+        Debug.Log(output);
+    }
+
+
+    public void ArrayShape(List<List<double>> arr)
+    {
+        if (arr == null || arr.Count == 0)
+        {
+            Debug.LogError("Array cannot be null or empty");
+            return; // Return or handle error according to your needs
+        }
+
+        int rows = arr.Count;
+        int cols = arr[0].Count;
+
+        Debug.Log($"({rows}, {cols})");
     }
 
 }
 
 interface IActivationFuntion {
     
-    public void Forward(List<double> inputs);
+    public void Forward(List<List<double>> inputs);
 
-    public void Backward(List<double> dvalues);
+    public void Backward(List<List<double>> dvalues);
 }
 
 class Activation_ReLU : IActivationFuntion {
 
-    public List<double> inputs;
-    public List<double> output;
-    public List<double> dinputs;
-
+    public List<List<double>> inputs = new List<List<double>> ();
+    public List<List<double>> output = new List<List<double>> ();
+    public List<List<double>> dinputs = new List<List<double>> ();
     private readonly NumCs nc = new NumCs();
 
-    public void Forward(List<double> inputs) {
+    public void Forward(List<List<double>> inputs) {
         this.inputs = inputs;
-        output = nc.Maximum(nc.Num1D(inputs.Count, 0), inputs);
+        output = nc.Maximum(0, inputs);
     }
 
-    public void Backward(List<double> dvalues) {
-        dinputs = nc.Maximum(nc.Num1D(0, dinputs.Count), dinputs);
+    public void Backward(List<List<double>> dvalues) {
+        dinputs = nc.Maximum(0, dvalues);
     }
 }
 
 class Activation_TanH : IActivationFuntion {
-    public List<double> inputs;
-    public List<double> output;
-    public List<double> dinputs;
+    
+    public List<List<double>> inputs = new List<List<double>> ();
+    public List<List<double>> output = new List<List<double>> ();
+    public List<List<double>> dinputs = new List<List<double>> ();
 
     private readonly NumCs nc = new NumCs();
 
-    public void Forward(List<double> inputs) {
-        output = nc.ScalarSubtraction(1, nc.ScalarDivision(2, nc.ScalarAddition(1, nc.ScalarPower(Math.E, nc.ScalarMultiplication(-2, inputs)))));
+    public void Forward(List<List<double>> inputs) {
+        /**
+        TanH function
+
+        f(x) = ( 2 / (1 + e^-2x) ) - 1
+        
+        **/
+
+        this.inputs = inputs;
+
+        output = 
+        nc.ScalarSubtraction(
+            nc.ScalarDivision(
+                nc.ScalarAddition(
+                    1, nc.VectorisedExp(
+                        nc.ScalarMultiplication(-2, this.inputs)
+                    )
+                    ), 2, true
+                ), 1
+        ); 
     }
 
-    public void Backward(List<double> dvalues) {
+    public void Backward(List<List<double>> dvalues) {
         
     }
 }
@@ -409,54 +574,32 @@ class Loss_PolicyLoss : ILoss {
 
 class Layer_Dense {
 
-    public List<double> inputs;
-    public List<double> output;
-    public List<double> dinputs;
+    public List<List<double>> inputs;
+    public List<List<double>> output;
+    public List<List<double>> dinputs;
     public List<List<double>> weights;
     public List<List<double>> dweights;
-    public List<double> biases;
-    public List<double> dbiases;
+    public List<List<double>> biases;
+    public List<List<double>> dbiases;
 
-    public readonly List<int> size;
+    
 
     private readonly NumCs nc = new NumCs();
 
-    public Layer_Dense(List<int> size) {
-        this.size = size;
-        weights = nc.CreateRandom2DList(size);
-        biases = nc.Num1D(this.size[1], 0);
+    public Layer_Dense(int nInputs, int nOutputs) {
+        
+        weights = nc.Rand2D(nInputs, nOutputs);
+        
+        biases = nc.Full(n: 0, 1, nOutputs);
     }
 
-    public void Forward(List<double> inputs) {
+    public void Forward(List<List<double>> inputs) {
         this.inputs = inputs;
-        output = nc.VectorisedSum(nc.DotProduct(inputs, weights), biases);
+        output = nc.VectorisedSum(nc.MatrixMul(inputs, weights), biases);
     }
 
-    public void Backward(List<double> dvalues) {
-        dweights = nc.DotProduct(dvalues, nc.Transpose1Dto2DWithAutoDimension(inputs, 1, -1));
+    public void Backward(List<List<double>> dvalues) {
+        //dweights = nc.DotProduct(dvalues, nc.Transpose1Dto2DWithAutoDimension(inputs, 1, -1));
         
-    }
-
-    public void DebugWeights() {
-        Debug.Log("Weights: ");
-        foreach(List<double> weightI in weights) {
-            foreach(double weight in weightI) {
-                Debug.Log(weight);
-         
-            }
-        }
-
-        Debug.Log("----------");
-    }
-
-    public void DebugBiases() {
-        Debug.Log("Biases: ");
-        foreach(double bias in biases) {
-            
-            Debug.Log(bias);
-        
-        }
-
-        Debug.Log("----------");
     }
 }
