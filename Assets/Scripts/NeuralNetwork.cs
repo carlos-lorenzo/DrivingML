@@ -45,6 +45,13 @@ public class NumCs
         
         List<double> result = new List<double>();
         
+        if (array1 == null) {
+            for (int i = 0; i < array2.Count; i++)
+            {
+                array1.Add(0);
+            }
+        }
+
         for (int i = 0; i < array1.Count; i++)
         {
 
@@ -297,6 +304,50 @@ public class NumCs
         return result;
     }
 
+    List<List<double>> Transpose1Dto2D(List<double> inputList, int rows, int cols)
+    {
+        if (inputList == null || inputList.Count != rows * cols)
+        {
+            Debug.LogError("Invalid input list or dimensions!");
+            return null; // Return null or handle error according to your needs
+        }
+
+        List<List<double>> transposedList = new List<List<double>>();
+
+        for (int i = 0; i < cols; i++)
+        {
+            List<double> newRow = new List<double>();
+            for (int j = 0; j < rows; j++)
+            {
+                newRow.Add(inputList[i + j * cols]);
+            }
+            transposedList.Add(newRow);
+        }
+
+        return transposedList;
+    }
+
+
+    public List<List<double>> Transpose1Dto2DWithAutoDimension(List<double> inputList, int rows, int cols)
+    {
+        if (rows == -1 && cols == -1)
+        {
+            Debug.LogError("Invalid dimensions!");
+            return null; // Return null or handle error according to your needs
+        }
+
+        if (rows == -1)
+        {
+            rows = inputList.Count / cols;
+        }
+        else if (cols == -1)
+        {
+            cols = inputList.Count / rows;
+        }
+
+        return Transpose1Dto2D(inputList, rows, cols);
+    }
+
 }
 
 interface IActivationFuntion {
@@ -320,7 +371,7 @@ class Activation_ReLU : IActivationFuntion {
     }
 
     public void Backward(List<double> dvalues) {
-        dinputs = nc.Maximum(null, dinputs);
+        dinputs = nc.Maximum(nc.Num1D(0, dinputs.Count), dinputs);
     }
 }
 
@@ -360,9 +411,11 @@ class Layer_Dense {
 
     public List<double> inputs;
     public List<double> output;
-
+    public List<double> dinputs;
     public List<List<double>> weights;
+    public List<List<double>> dweights;
     public List<double> biases;
+    public List<double> dbiases;
 
     public readonly List<int> size;
 
@@ -371,13 +424,17 @@ class Layer_Dense {
     public Layer_Dense(List<int> size) {
         this.size = size;
         weights = nc.CreateRandom2DList(size);
-
         biases = nc.Num1D(this.size[1], 0);
     }
 
     public void Forward(List<double> inputs) {
         this.inputs = inputs;
         output = nc.VectorisedSum(nc.DotProduct(inputs, weights), biases);
+    }
+
+    public void Backward(List<double> dvalues) {
+        dweights = nc.DotProduct(dvalues, nc.Transpose1Dto2DWithAutoDimension(inputs, 1, -1));
+        
     }
 
     public void DebugWeights() {

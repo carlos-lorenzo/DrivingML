@@ -3122,7 +3122,7 @@ GameObject:
   - component: {fileID: 1777423276}
   - component: {fileID: 1777423275}
   m_Layer: 0
-  m_Name: NeurlaNetwork
+  m_Name: NeuralNetwork
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3141,7 +3141,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size1: 0200000010000000
-  size2: 1000000001000000
+  size2: 1000000003000000
 --- !u!4 &1777423276
 Transform:
   m_ObjectHideFlags: 0
