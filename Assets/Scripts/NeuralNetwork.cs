@@ -2,12 +2,14 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.Antlr3.Runtime;
+using Unity.Mathematics;
 
 
 public class NeuralNetwork : MonoBehaviour
 {
-    public List<int> size1 = new List<int> {2, 3};
-    public List<int> size2 = new List<int> {3, 2};
+    public List<int> size1;
+    public List<int> size2;
     void Start() {
 
         NumCs nc = new NumCs();
@@ -129,7 +131,7 @@ public class NumCs
     }
 
 
-   public List<List<double>> MatrixMul(List<List<double>> matrix1, List<List<double>> matrix2)
+   public List<List<double>> MatMul(List<List<double>> matrix1, List<List<double>> matrix2)
     {
 
         /** 
@@ -375,6 +377,7 @@ public class NumCs
 
         return vector;
     }
+    
     public List<List<double>> ScalarPower(double n, List<List<double>> vector, bool reversed = false)
     {
         /**
@@ -447,6 +450,166 @@ public class NumCs
         return result;
     }
 
+    public List<List<double>> VectorisedProduct(List<List<double>> array1, List<List<double>> array2)
+    {
+        /**
+        Element-wise multiplication of two 2D arrays. Can have (a, b) or (1, b)
+        
+        Args:
+            array1: First 2D array for multiplication
+            array2: Second 2D array for multiplication
+
+        Returns:
+            A 2D array representing the element-wise multiplication of array1 and array2 
+            with the shape determined by the largest first dimension
+        **/
+
+        if (array1 == null || array2 == null)
+        {
+            Console.WriteLine("Invalid input arrays!");
+            return null; // Return null or handle error according to your needs
+        }
+
+        int rows1 = array1.Count;
+        int rows2 = array2.Count;
+
+        
+        int maxRows = Math.Max(rows1, rows2);
+        Console.WriteLine(maxRows);
+        List<List<double>> result = new List<List<double>>();
+
+        for (int i = 0; i < maxRows; i++)
+        {
+            int cols1 = (i < rows1) ? array1[i].Count : 0;
+            int cols2 = (i < rows2) ? array2[i].Count : 0;
+            int maxCols = Math.Max(cols1, cols2);
+        
+            result.Add(new List<double>());
+
+            for (int j = 0; j < maxCols; j++)
+            {
+                double val1 = (i < rows1 && j < cols1) ? array1[i][j] : 0;
+                double val2 = (i < rows2 && j < cols2) ? array2[i][j] : 0;
+
+                result[i].Add(val1 * val2);
+            }
+        }
+
+        return result;
+    }
+
+    public List<List<double>> TransposeMatrix(List<List<double>> matrix)
+    {
+        /**
+            Transposes a 2D matrix (list of lists).
+
+            Args:
+                matrix: The 2D matrix to be transposed
+
+            Returns:
+                The transposed matrix
+        **/
+
+        if (matrix == null || matrix.Count == 0)
+        {
+            Debug.Log("Matrix cannot be null or empty");
+            return null; // Handle error or return null according to your needs
+        }
+
+        int rows = matrix.Count;
+        int cols = matrix[0].Count;
+
+        List<List<double>> transposedMatrix = new List<List<double>>();
+
+        for (int j = 0; j < cols; j++)
+        {
+            transposedMatrix.Add(new List<double>());
+            for (int i = 0; i < rows; i++)
+            {
+                transposedMatrix[j].Add(matrix[i][j]);
+            }
+        }
+
+        return transposedMatrix;
+    }
+    
+    public List<List<double>> SumArray(List<List<double>> arr, int axis = 0, bool keepDims = true)
+    {
+        if (arr == null || arr.Count == 0 || arr.Any(subList => subList == null || subList.Count == 0))
+        {
+            Debug.Log("Array cannot be null or empty");
+            return null; // Handle error or return null according to your needs
+        }
+
+        
+        int rows = arr.Count;
+        int cols = arr[0].Count;
+
+        if (axis == 0) // Sum along columns (vertical sum)
+        {
+            List<double> sumResult = new List<double>();
+
+            for (int j = 0; j < cols; j++)
+            {
+                double columnSum = 0;
+                for (int i = 0; i < rows; i++)
+                {
+                    columnSum += arr[i][j];
+                }
+                sumResult.Add(columnSum);
+            }
+
+            if (keepDims)
+            {
+                return sumResult.Select(val => new List<double> { val }).ToList();
+            }
+            else
+            {
+                return new List<List<double>> { sumResult };
+            }
+        }
+        else if (axis == 1) // Sum along rows (horizontal sum)
+        {
+            List<List<double>> sumResult = new List<List<double>>();
+
+            for (int i = 0; i < rows; i++)
+            {
+                double rowSum = arr[i].Sum();
+                if (keepDims)
+                {
+                    sumResult.Add(new List<double> { rowSum });
+                }
+                else
+                {
+                    sumResult.Add(new List<double> { rowSum });
+                }
+            }
+
+            return sumResult;
+        }
+        else
+        {
+            Debug.Log("Invalid axis. Use axis = 0 for columns or axis = 1 for rows");
+            return null; // Handle error or return null according to your needs
+        }
+    }
+    
+    public List<List<double>> VectorisedTanhH(List<List<double>> arr) {
+        for (int i = 0; i < arr.Count; i++)
+        {
+            for (int j = 0; j < arr[i].Count; j++)
+            {
+                arr[i][j] = Math.Tanh(arr[i][j]);
+            }
+        }
+
+        return arr;
+    }
+
+   public List<List<double>> Mean(List<List<double>> arr) {
+        return ScalarDivision(SumArray(arr, 0, true), arr[0].Count);
+    }
+
     public void DebugArray(List<List<double>> arr)
     {
         /**
@@ -480,7 +643,6 @@ public class NumCs
         Debug.Log(output);
     }
 
-
     public void ArrayShape(List<List<double>> arr)
     {
         if (arr == null || arr.Count == 0)
@@ -488,6 +650,7 @@ public class NumCs
             Debug.LogError("Array cannot be null or empty");
             return; // Return or handle error according to your needs
         }
+        
 
         int rows = arr.Count;
         int cols = arr[0].Count;
@@ -517,7 +680,7 @@ class Activation_ReLU : IActivationFuntion {
     }
 
     public void Backward(List<List<double>> dvalues) {
-        dinputs = nc.Maximum(0, dvalues);
+        dinputs = nc.Maximum(1, nc.Maximum(0, dvalues));
     }
 }
 
@@ -533,33 +696,64 @@ class Activation_TanH : IActivationFuntion {
         /**
         TanH function
 
-        f(x) = ( 2 / (1 + e^-2x) ) - 1
+        f(x) = tanh(x)
         
         **/
 
         this.inputs = inputs;
 
-        output = 
-        nc.ScalarSubtraction(
-            nc.ScalarDivision(
-                nc.ScalarAddition(
-                    1, nc.VectorisedExp(
-                        nc.ScalarMultiplication(-2, this.inputs)
-                    )
-                    ), 2, true
-                ), 1
-        ); 
+
+        output = nc.VectorisedTanhH(this.inputs);
+        
     }
 
     public void Backward(List<List<double>> dvalues) {
-        
+        /**
+            f'(x) = sech^2(x)
+        **/
+
+        // dvalues: gradients from the next layer or loss function
+
+        List<List<double>> derivative = new List<List<double>>();
+
+        // Compute derivative for each element in the output using the derivative formula
+        for (int i = 0; i < output.Count; i++)
+        {
+            List<double> row = new List<double>();
+            for (int j = 0; j < output[i].Count; j++)
+            {
+                row.Add(1 - output[i][j] * output[i][j]);
+            }
+            derivative.Add(row);
+        }
+
+        // Element-wise multiplication of derivative with the incoming gradients (dvalues)
+        // This gives the gradients with respect to the input
+        // This result can then be used in the backpropagation algorithm
+
+        // Example of element-wise multiplication (You may need to modify this according to your library)
+        for (int i = 0; i < dvalues.Count; i++)
+        {
+            for (int j = 0; j < dvalues[i].Count; j++)
+            {
+                dvalues[i][j] *= derivative[i][j];
+            }
+        }
+
+        dinputs = dvalues; 
     }
 }
 
 
 interface ILoss {
-    public void Forward();
-    public void Backward();
+    //List<List<double>> inputs;
+    public void Forward(List<List<double>> ypred, List<List<double>> ytrue){
+        this.inputs = ypred;
+    }
+    public void Calculate(List<List<double>> ypred, List<List<double>> ytrue) {
+        Forward(ypred, ytrue);
+        //return new NumCs().Mean(this.output);
+    }
 }
 
 class Loss_PolicyLoss : ILoss {
@@ -595,11 +789,13 @@ class Layer_Dense {
 
     public void Forward(List<List<double>> inputs) {
         this.inputs = inputs;
-        output = nc.VectorisedSum(nc.MatrixMul(inputs, weights), biases);
+        output = nc.VectorisedSum(nc.MatMul(inputs, weights), biases);
     }
 
     public void Backward(List<List<double>> dvalues) {
-        //dweights = nc.DotProduct(dvalues, nc.Transpose1Dto2DWithAutoDimension(inputs, 1, -1));
+        dweights = nc.MatMul(nc.TransposeMatrix(this.inputs), dvalues);
+        dbiases = nc.SumArray(dvalues, 0, false);
+        dinputs = nc.MatMul(dvalues, nc.TransposeMatrix(weights));
         
     }
 }
