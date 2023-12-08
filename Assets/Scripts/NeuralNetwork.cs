@@ -2,38 +2,98 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting.Antlr3.Runtime;
-using Unity.Mathematics;
+using Unity.VisualScripting.Dependencies.NCalc;
 
 
 public class NeuralNetwork : MonoBehaviour
 {
-    public List<int> size1;
-    public List<int> size2;
-    void Start() {
 
-        NumCs nc = new NumCs();
 
-        Layer_Dense layer1 = new Layer_Dense(size1[0], size1[1]);
-        Activation_ReLU activation1 = new Activation_ReLU();
-        
-        Layer_Dense layer2 = new Layer_Dense(size2[0], size2[1]);
-        Activation_TanH activation2 = new Activation_TanH();
+    public int epochs;
 
-        List<List<double>> inputs = nc.Rand2D(1, size1[0]);
-        
+    double F(double x) {
+        return x*x;
+    }
 
-        layer1.Forward(inputs);
-        
+    NumCs nc = new NumCs();
+
+    Layer_Dense layer1 = new Layer_Dense(1, 32);
+    Activation_ReLU activation1 = new Activation_ReLU();
+    
+    Layer_Dense layer2 = new Layer_Dense(32, 1);
+    Activation_ReLU activation2 = new Activation_ReLU();
+
+    Loss_MSE loss = new Loss_MSE();
+
+    Optimiser_SGD optimiser = new Optimiser_SGD(0.001);
+
+    List<List<double>> ForwardPass(List<List<double>> X, List<List<double>> ytrue) {
+
+        // Forward pass
+        layer1.Forward(X);
         activation1.Forward(layer1.output);
 
         layer2.Forward(activation1.output);
         activation2.Forward(layer2.output);
+        
+        loss.Forward(activation2.output, ytrue);
+        return activation2.output;
 
+    }
 
-        nc.DebugArray(activation2.output);
+    void Start() {
 
         
+
+
+        List<List<double>> X = new List<List<double>> ();
+        List<List<double>> ytrue = new List<List<double>> ();
+        
+        //for (double x = -10; x < 10; x+=0.1)
+        //{
+        //    X.Add(new List<double>() {x});
+        //    ytrue.Add(new List<double>() {F(x)});
+        //}
+        X.Add(new List<double>() {2});
+        ytrue.Add(new List<double>() {F(2)});
+        
+        for (int epoch = 0; epoch < epochs; epoch++)
+        {
+
+            ForwardPass(X, ytrue);
+            
+            // Backward pass
+            loss.Backward(ytrue);
+
+            
+            
+            activation2.Backward(loss.dinputs);
+            
+            
+            layer2.Backward(activation2.dinputs);
+            
+            activation1.Backward(layer2.dinputs);
+            
+            layer1.Backward(activation1.dinputs);
+            
+            
+            // Updating params
+            optimiser.UpdateParams(layer1);
+            optimiser.UpdateParams(layer2);
+
+            if (epoch % 100 == 0) {
+
+                nc.DebugArray(loss.Calculate());
+
+
+            }
+            
+        }
+
+        var ypred = ForwardPass(X, ytrue);
+        nc.DebugArray(ypred);
+        
+
     }
 }
 
@@ -606,8 +666,15 @@ public class NumCs
         return arr;
     }
 
-   public List<List<double>> Mean(List<List<double>> arr) {
-        return ScalarDivision(SumArray(arr, 0, true), arr[0].Count);
+   public List<List<double>> Mean(int axis, List<List<double>> arr) {
+        
+        if (axis != 0 || axis != 1) {
+            Console.WriteLine("Invalid axis provided (0 or 1)");
+            return null;
+            
+        }
+        
+        return ScalarDivision(SumArray(arr, axis, true), arr[0].Count);
     }
 
     public void DebugArray(List<List<double>> arr)
@@ -746,23 +813,56 @@ class Activation_TanH : IActivationFuntion {
 
 
 interface ILoss {
-    //List<List<double>> inputs;
-    public void Forward(List<List<double>> ypred, List<List<double>> ytrue){
-        this.inputs = ypred;
-    }
-    public void Calculate(List<List<double>> ypred, List<List<double>> ytrue) {
-        Forward(ypred, ytrue);
-        //return new NumCs().Mean(this.output);
-    }
+    
+
+    public void Forward(List<List<double>> ypred, List<List<double>> ytrue);
+    public List<List<double>> Calculate();
+
 }
 
-class Loss_PolicyLoss : ILoss {
-    public void Forward() {
+class Loss_MSE : ILoss {
 
+    private NumCs nc = new NumCs();
+
+    public List<List<double>> inputs = new List<List<double>> ();
+    public List<List<double>> output = new List<List<double>> ();
+    public List<List<double>> dinputs = new List<List<double>> ();
+
+
+    public void Forward(List<List<double>> ypred, List<List<double>> ytrue) {
+        inputs = ypred;
+
+        List<List<double>> error = nc.VectorisedSum(ytrue, nc.ScalarMultiplication(-1, ypred));
+
+        List<List<double>> squaredError = nc.VectorisedProduct(error, error);
+        
+        
+        output = nc.ScalarDivision(nc.SumArray(squaredError, 0, true), squaredError[0].Count);
     }
 
-    public void Backward() {
-        
+    public void Backward(List<List<double>> ytrue)
+    {
+        int samples = this.output.Count;
+        int outputs = this.output[0].Count;
+
+        // Derivative of MSE: dMSE/dypred = 2 * (ypred - ytrue) / samples
+        List<List<double>> dMSEdypred = new List<List<double>>();
+
+        for (int i = 0; i < samples; i++)
+        {
+            dMSEdypred.Add(new List<double>());
+            for (int j = 0; j < outputs; j++)
+            {
+                dMSEdypred[i].Add(2 * (output[i][j] - ytrue[i][j]) / samples);
+            }
+        }
+
+        // Store the gradients for further use in updating the network
+        dinputs = dMSEdypred;
+    }
+
+    public List<List<double>> Calculate() {
+        return nc.ScalarDivision(nc.SumArray(output, 1, true), output[0].Count);
     }
 }
 
@@ -798,4 +898,47 @@ class Layer_Dense {
         dinputs = nc.MatMul(dvalues, nc.TransposeMatrix(weights));
         
     }
+}
+
+interface Optimiser {
+    double learningRate {get; set;}
+    
+
+    public void PreUpdatePararms() {
+        learningRate = learningRate; //add decay logic
+    }
+    
+    public void UpdateParams(Layer_Dense layer);
+
+    public void PostUpdateParams() {
+
+        // iterations += 1;
+        return;
+    }
+}
+
+
+class Optimiser_SGD : Optimiser {
+    double _learningRate;
+    public double learningRate {
+        get => _learningRate;
+        set => _learningRate = value;
+    }
+
+    private NumCs nc = new NumCs();
+
+    public Optimiser_SGD(double learningRate) {
+        this.learningRate = learningRate;
+    }
+
+    public void UpdateParams(Layer_Dense layer) {
+        List<List<double>> weight_changes = nc.ScalarMultiplication(-learningRate, layer.dweights);
+        List<List<double>> bias_changes = nc.ScalarMultiplication(-learningRate, layer.dbiases);
+
+        layer.weights = nc.VectorisedSum(layer.weights, weight_changes);
+        layer.biases = nc.VectorisedSum(layer.biases, bias_changes);
+
+    }
+
+
 }
