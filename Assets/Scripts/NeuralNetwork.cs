@@ -123,17 +123,13 @@ public class NeuralNetwork : MonoBehaviour
 
     void Start() {
 
-        NeuralNetwork nn = new NeuralNetwork();
-        NumCs nc = nn.nc;
-
         int numSamples = 100;
         int numClasses = 2;
 
-        List<List<List<double>>> dataset = nn.GenerateSpiralDataset(numSamples, numClasses);
+        List<List<List<double>>> dataset = GenerateSpiralDataset(numSamples, numClasses);
         List<List<double>> X = dataset[0];
         List<List<double>> y = dataset[1];
 
-        
         
         X = nc.ScalarMultiplication(0.1, X);
         
