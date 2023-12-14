@@ -16,21 +16,11 @@ public class ManualDrive : MonoBehaviour
 
     public float currentVelocity; 
 
-
-    float maxDistance = 250;
-
     public float distanceToCollider;
-
-    public LayerMask layerMask;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-    }
-
-    private void Update() {
-        //Debug.DrawRay(transform.position, transform.up * 100, Color.red);
-
     }
 
     void FixedUpdate()
@@ -39,19 +29,6 @@ public class ManualDrive : MonoBehaviour
 
         h = -Input.GetAxis("Horizontal");
 
-         // Cast a ray in the forward direction of the object
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, maxDistance);
-        if (hit.collider != null)
-        {
-            // Check if the ray hits a collider
-            Debug.DrawRay(transform.position, transform.up * hit.distance, Color.green);
-            
-            distanceToCollider = hit.distance;
-            // Use distanceToCollider in your logic here
-        } else {
-            // Ray doesn't hit anything
-            Debug.DrawRay(transform.position, transform.up * maxDistance, Color.red);
-        }
 
         Vector2 speed = transform.up * (v * acceleration);
 

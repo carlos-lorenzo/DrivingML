@@ -1,31 +1,57 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class AgentView : MonoBehaviour
 {
+    [SerializeField]
+    private LayerMask layers;
+
+    [SerializeField]
+    private float maxDistance = 10f;
+
+    [SerializeField]
+    private List<float> directions = new List<float>  { -75f, -35f, 0f, 35f, 75f };
+    public List<List<double>> inputs; // Array to store distances
     
-    Vector3 debugDirection = Vector3.up;
-    Vector2 rayDirection = Vector2.up;
-    public LayerMask layers;
-    public float distance;
-    // Update is called once per frame
+    private Rigidbody2D rb;
+
+    void Start() {
+        rb = gameObject.GetComponent<Rigidbody2D>();
+    }
+
     void FixedUpdate()
     {
-        var heading = Math.Atan2(transform.right.z, transform.right.x) * Mathf.Rad2Deg;
-        RaycastHit2D hit = Physics2D.Raycast(transform.up, rayDirection, Mathf.Infinity, layers);
-
-        // If it hits something...
-        if (hit.collider != null)
+        inputs = new List<List<double>>
         {
-            // Calculate the distance from the surface and the "error" relative
-            // to the floating height.
-            
-            distance = hit.distance;
-            
-            Debug.DrawRay(transform.position, debugDirection * distance, Color.green);
-            
+            new List<double>()
+        };
+       
+        for (int i = 0; i < directions.Count; i++)
+        {
+            float angle = directions[i];
+            Vector2 rayDirection = Quaternion.Euler(0, 0, angle) * transform.up;
+
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, rayDirection, maxDistance, layers);
+
+            if (hit.collider != null)
+            {
+                inputs[0].Add((double)hit.distance);
+                //Debug.DrawRay(transform.position, rayDirection * inputs[0][i], Color.green);
+            }
+            else
+            {
+                inputs[0].Add(-1); // Set distance to -1 if ray doesn't hit anything
+                //Debug.DrawRay(transform.position, rayDirection * maxDistance, Color.red);
+            }
         }
+
+        float velocity = rb.velocity.magnitude;
+
+        if (velocity <= 1e-5){
+            velocity = 0;
+        }
+        
+        inputs[0].Add(velocity);
+        inputs[0].Add(Vector3.SignedAngle(rb.rotation * Vector3.up, rb.velocity, Vector3.up));
     }
 }

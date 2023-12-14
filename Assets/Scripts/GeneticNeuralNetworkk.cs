@@ -9,7 +9,7 @@ public class GeneticNeuralNetwork : MonoBehaviour
    
 
     private NumCs nc = new NumCs();
-    public Layer_Dense layer1 = new Layer_Dense(3, 32);
+    public Layer_Dense layer1 = new Layer_Dense(7, 32);
     Activation_ReLU activation1 = new Activation_ReLU();
 
     
@@ -18,13 +18,14 @@ public class GeneticNeuralNetwork : MonoBehaviour
     Activation_TanH activation2 = new Activation_TanH();
     
     DeepDrive deepDrive;
-
+    AgentView agentView;
     private int moveChanges = 0;
     public int simLength;
 
     private void Start() {
         deepDrive = gameObject.GetComponent<DeepDrive>();
-        
+        agentView = gameObject.GetComponent<AgentView>();
+
         StartCoroutine(Drive());
     }
 
@@ -32,11 +33,12 @@ public class GeneticNeuralNetwork : MonoBehaviour
     private void FixedUpdate() {
         if (moveChanges == simLength) {
             StopCoroutine(Drive());
+            deepDrive.finished = true;
         }
     }
 
     IEnumerator Drive() {
-        var directionChange = ForwardPass(deepDrive.inputs);
+        var directionChange = ForwardPass(agentView.inputs);
 
         deepDrive.h = (float)directionChange[0][0];
         deepDrive.v = (float)directionChange[0][1];

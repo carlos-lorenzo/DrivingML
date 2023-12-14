@@ -250,7 +250,10 @@ MonoBehaviour:
   layers:
     serializedVersion: 2
     m_Bits: 1
-  distance: 0
+  maxDistance: 100
+  directions:
+  - 0
+  distances: []
 --- !u!212 &1469435691
 SpriteRenderer:
   m_ObjectHideFlags: 0

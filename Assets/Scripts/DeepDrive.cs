@@ -21,42 +21,22 @@ public class DeepDrive : MonoBehaviour
     public bool finished = false;
     public int lastCheckpoint = -1;
 
-    public int checkpointReward = 10;
-    public int backwardsPunishment = 2000;
+    public int checkpointReward = 5;
+    public int backwardsPunishment = 100;
 
-    public int collisionPunishment = 3;
+    public int collisionPunishment = 2;
 
-    float maxDistance = 20f;
-
-    public List<List<double>> inputs;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        StartCoroutine(UpdaFitness());
+
     }
 
     void FixedUpdate()
     {
         
-
-         // Cast a ray in the forward direction of the object
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, maxDistance))
-        {
-            // Check if the ray hits a collider
-            Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.green);
-            
-            float distanceToCollider = hit.distance;
-            // Use distanceToCollider in your logic here
-        }
-        else
-        {
-            // Ray doesn't hit anything
-            Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.red);
-        }
-
-        Vector2 speed = transform.up * (v * acceleration);
+        //Vector2 speed = transform.up * (v * acceleration);
 
         // Calculate the desired velocity
         float targetVelocity = v * acceleration; // * speed
@@ -91,9 +71,16 @@ public class DeepDrive : MonoBehaviour
         Vector2 rightAngleFromForward = Quaternion.AngleAxis(steeringRightAngle, Vector3.forward) * forward;
 
         float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
-        Vector2 relativeForce = (rightAngleFromForward.normalized * -1.0f) * (driftForce * 10.0f);
+        Vector2 relativeForce = rightAngleFromForward.normalized * -1.0f * (driftForce * 10.0f);
 
         rb.AddForce(rb.GetRelativeVector(relativeForce));
+
+        if (finished) {
+            v = 0;
+            h = 0;
+            rb.velocity = Vector2.zero;
+            UpdateFitness();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other) {
@@ -111,22 +98,20 @@ public class DeepDrive : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other) {
        
-        if (collided) {return;}
+        //if (collided) {return;}
 
         if (other.gameObject.CompareTag("Track")) {
             collided = true;
             fitness -= collisionPunishment;
-            return;
         }
     } 
     
-    public IEnumerator UpdaFitness() {
+    public void UpdateFitness() {
         
         GameObject nextCheckpoint = GameObject.Find((lastCheckpoint + 1).ToString());
 
         fitness -= Vector3.Distance(nextCheckpoint.transform.position, gameObject.transform.position);
 
-        yield return new WaitForSeconds(0.5f);
         
     }
 }
