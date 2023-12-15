@@ -74,7 +74,7 @@ public class DeepDrive : MonoBehaviour
         Vector2 relativeForce = rightAngleFromForward.normalized * -1.0f * (driftForce * 10.0f);
 
         rb.AddForce(rb.GetRelativeVector(relativeForce));
-
+        fitness -= 0.0001f;
         if (finished) {
             v = 0;
             h = 0;
@@ -82,6 +82,8 @@ public class DeepDrive : MonoBehaviour
             UpdateFitness();
         }
     }
+
+    
 
     private void OnTriggerEnter2D(Collider2D other) {
         if (other.CompareTag("Checkpoint")) {
@@ -91,6 +93,7 @@ public class DeepDrive : MonoBehaviour
                 lastCheckpoint = checkpointNumber;
                 fitness += checkpointReward;
             } else {
+                //finished = true;
                 fitness -= backwardsPunishment;
             }
         }
@@ -98,10 +101,13 @@ public class DeepDrive : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other) {
        
-        //if (collided) {return;}
+        if (collided) {return;}
 
         if (other.gameObject.CompareTag("Track")) {
+            //GameObject.Find("NeuralNetwork").GetComponent<DeepGeneticManagement>().collided++;
+
             collided = true;
+            //finished = true;
             fitness -= collisionPunishment;
         }
     } 

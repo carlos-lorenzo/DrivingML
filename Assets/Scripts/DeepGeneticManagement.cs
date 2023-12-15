@@ -15,10 +15,11 @@ public class DeepGeneticManagement : MonoBehaviour
     public GameObject agent;
 
     
-    public int generation = -1;
-    public int simLength = 2;
+    public int generation = 0;
+    public int simLength = 10;
     public int increaseLengthEveryNGenerations = 5;
     
+    public int collided = 0;
     private bool completed = true;
 
     private Vector3 spawn = new Vector3(-205, 0, -0.1f);
@@ -29,33 +30,17 @@ public class DeepGeneticManagement : MonoBehaviour
     private List<List<List<double>>> parentBiases = new List<List<List<double>>>();
     
     void Start() {
+        Time.timeScale = 5;
         Populate();
     }
 
     
     void FixedUpdate() {
-        
-        if (generation > 0) {
-            DeepDrive agentMoves = population[^1].GetComponent<DeepDrive>();
-            if (agentMoves != null) {
-                if (agentMoves.finished) {
-                    
-                    completed = true;
-                }
-            }
-            
-        }
-        
-
-        if (completed) {
+        if(population[^1].GetComponent<DeepDrive>().finished) {
+            generation++;
             Populate();
-            generation += 1;
-            completed = false;
-
-            if (generation % increaseLengthEveryNGenerations == 0) {
-                simLength += 1;
-            }
-            
+            simLength++;
+            deltaMagnitude*=0.998;
         }
         
     }
@@ -66,6 +51,8 @@ public class DeepGeneticManagement : MonoBehaviour
         
         
         if (generation > 0){
+            
+            
             GameObject fittestParent = FittestParents(1)[0];
             GeneticNeuralNetwork parentNN = fittestParent.GetComponent<GeneticNeuralNetwork>();
             
@@ -75,6 +62,9 @@ public class DeepGeneticManagement : MonoBehaviour
 
             parentBiases.Add(parentNN.layer1.biases);
             parentBiases.Add(parentNN.layer2.biases);
+            
+            
+            
             Purge();
             
             
@@ -89,6 +79,8 @@ public class DeepGeneticManagement : MonoBehaviour
 
         }
 
+
+        
         if (generation > 0) {
             foreach(GameObject agent in population) {
                 GeneticNeuralNetwork agentNN = agent.GetComponent<GeneticNeuralNetwork>();
@@ -96,6 +88,7 @@ public class DeepGeneticManagement : MonoBehaviour
                 agentNN.TuneParameters(deltaMagnitude);
             }
         }
+        
     
     }   
 
@@ -106,7 +99,7 @@ public class DeepGeneticManagement : MonoBehaviour
         List<float> fitnessScores = new List<float>();
 
         foreach(GameObject agent in population) {
-            float currentFitness = agent.GetComponent<AgentMoves>().fitness;
+            float currentFitness = agent.GetComponent<DeepDrive>().fitness;
             fitnessScores.Add(currentFitness);
         }
 

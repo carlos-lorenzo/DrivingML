@@ -2447,7 +2447,7 @@ Transform:
   m_GameObject: {fileID: 1442404367}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.2588191, w: 0.9659258}
-  m_LocalPosition: {x: -20.47, y: -4.38, z: -0.1}
+  m_LocalPosition: {x: -19.36, y: -6.25, z: -0.1}
   m_LocalScale: {x: 5, y: 1, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3122,7 +3122,7 @@ GameObject:
   - component: {fileID: 1777423276}
   - component: {fileID: 1777423277}
   m_Layer: 0
-  m_Name: NeurlaNetwork
+  m_Name: NeuralNetwork
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3156,11 +3156,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deltaMagnitude: 0.1
-  populationSize: 5
+  populationSize: 100
   agent: {fileID: 5136981515623968702, guid: 12b3b534d44f12b4e92a2fcb3d5bd8fc, type: 3}
-  generation: -1
-  simLength: 2
+  generation: 0
+  simLength: 100
   increaseLengthEveryNGenerations: 10
+  collided: 0
 --- !u!1 &1798092206
 GameObject:
   m_ObjectHideFlags: 0
@@ -3188,7 +3189,7 @@ Transform:
   m_GameObject: {fileID: 1798092206}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.38268343, w: 0.92387956}
-  m_LocalPosition: {x: -17.8, y: -7.71, z: -0.1}
+  m_LocalPosition: {x: -13, y: -12.51, z: -0.1}
   m_LocalScale: {x: 5, y: 1, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []

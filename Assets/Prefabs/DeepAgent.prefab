@@ -184,7 +184,7 @@ MonoBehaviour:
   lastCheckpoint: -1
   checkpointReward: 5
   backwardsPunishment: 100
-  collisionPunishment: 1
+  collisionPunishment: 5
 --- !u!114 &6878702494854953148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,4 +219,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24bdeb841d6e440bfb0887f78238ca42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveChanges: 0
   simLength: 0
