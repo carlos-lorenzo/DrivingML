@@ -45,13 +45,13 @@ public class AgentView : MonoBehaviour
             }
         }
 
-        float velocity = rb.velocity.magnitude;
+        float velocity = rb.linearVelocity.magnitude;
 
         if (velocity <= 1e-5){
             velocity = 0;
         }
         
         inputs[0].Add(velocity);
-        inputs[0].Add(Vector3.SignedAngle(rb.rotation * Vector3.up, rb.velocity, Vector3.up));
+        inputs[0].Add(Vector3.SignedAngle(rb.rotation * Vector3.up, rb.linearVelocity, Vector3.up));
     }
 }

@@ -33,7 +33,7 @@ public class Drive : MonoBehaviour
         // Apply the smoothed velocity as force
         rb.AddForce(transform.up * currentVelocity);
 
-        float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
+        float direction = Vector2.Dot(rb.linearVelocity, rb.GetRelativeVector(Vector2.up));
         if (direction >= 0.0f)
         {
             rb.rotation += h * steering;
@@ -56,7 +56,7 @@ public class Drive : MonoBehaviour
 
         Vector2 rightAngleFromForward = Quaternion.AngleAxis(steeringRightAngle, Vector3.forward) * forward;
 
-        float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
+        float driftForce = Vector2.Dot(rb.linearVelocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
         Vector2 relativeForce = (rightAngleFromForward.normalized * -1.0f) * (driftForce * 10.0f);
 
         rb.AddForce(rb.GetRelativeVector(relativeForce));

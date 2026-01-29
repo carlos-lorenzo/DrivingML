@@ -21,10 +21,10 @@ public class DeepDrive : MonoBehaviour
     public bool finished = false;
     public int lastCheckpoint = -1;
 
-    public int checkpointReward = 5;
-    public int backwardsPunishment = 100;
+    public int checkpointReward = 100;
+    public int backwardsPunishment = 500;
 
-    public int collisionPunishment = 2;
+    public int collisionPunishment = 1;
 
 
     void Start()
@@ -47,7 +47,7 @@ public class DeepDrive : MonoBehaviour
         // Apply the smoothed velocity as force
         rb.AddForce(transform.up * currentVelocity);
 
-        float direction = Vector2.Dot(rb.velocity, rb.GetRelativeVector(Vector2.up));
+        float direction = Vector2.Dot(rb.linearVelocity, rb.GetRelativeVector(Vector2.up));
         if (direction >= 0.0f)
         {
             rb.rotation += h * steering;
@@ -70,7 +70,7 @@ public class DeepDrive : MonoBehaviour
 
         Vector2 rightAngleFromForward = Quaternion.AngleAxis(steeringRightAngle, Vector3.forward) * forward;
 
-        float driftForce = Vector2.Dot(rb.velocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
+        float driftForce = Vector2.Dot(rb.linearVelocity, rb.GetRelativeVector(rightAngleFromForward.normalized));
         Vector2 relativeForce = rightAngleFromForward.normalized * -1.0f * (driftForce * 10.0f);
 
         rb.AddForce(rb.GetRelativeVector(relativeForce));
@@ -78,7 +78,7 @@ public class DeepDrive : MonoBehaviour
         if (finished) {
             v = 0;
             h = 0;
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
             UpdateFitness();
         }
     }
@@ -101,7 +101,7 @@ public class DeepDrive : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other) {
        
-        if (collided) {return;}
+        //if (collided) {return;}
 
         if (other.gameObject.CompareTag("Track")) {
             //GameObject.Find("NeuralNetwork").GetComponent<DeepGeneticManagement>().collided++;
